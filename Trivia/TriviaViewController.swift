@@ -27,6 +27,7 @@ class TriviaViewController: UIViewController {
     addGradient()
     questionContainerView.layer.cornerRadius = 8.0
     // TODO: FETCH TRIVIA QUESTIONS HERE
+      self.fetchNewQuestionBank()
   }
   
   private func updateQuestion(withQuestionIndex questionIndex: Int) {
@@ -42,14 +43,23 @@ class TriviaViewController: UIViewController {
       answerButton1.setTitle(answers[1], for: .normal)
       answerButton1.isHidden = false
     }
+      else {
+          answerButton1.isHidden = true
+      }
     if answers.count > 2 {
       answerButton2.setTitle(answers[2], for: .normal)
       answerButton2.isHidden = false
     }
+      else {
+          answerButton2.isHidden = true
+      }
     if answers.count > 3 {
       answerButton3.setTitle(answers[3], for: .normal)
       answerButton3.isHidden = false
     }
+      else {
+          answerButton3.isHidden = true
+      }
   }
   
   private func updateToNextQuestion(answer: String) {
@@ -68,18 +78,29 @@ class TriviaViewController: UIViewController {
     return answer == questions[currQuestionIndex].correctAnswer
   }
   
-  private func showFinalScore() {
-    let alertController = UIAlertController(title: "Game over!",
-                                            message: "Final score: \(numCorrectQuestions)/\(questions.count)",
-                                            preferredStyle: .alert)
-    let resetAction = UIAlertAction(title: "Restart", style: .default) { [unowned self] _ in
-      currQuestionIndex = 0
-      numCorrectQuestions = 0
-      updateQuestion(withQuestionIndex: currQuestionIndex)
+    private func showFinalScore() {
+        let alertController = UIAlertController(title: "Game over!",
+                                                message: "Final score: \(numCorrectQuestions)/\(questions.count)",
+                                                preferredStyle: .alert)
+        let resetAction = UIAlertAction(title: "Restart", style: .default) { [unowned self] _ in
+            self.fetchNewQuestionBank()
+        }
+        alertController.addAction(resetAction)
+        present(alertController, animated: true, completion: nil)
     }
-    alertController.addAction(resetAction)
-    present(alertController, animated: true, completion: nil)
-  }
+    
+    private func fetchNewQuestionBank() {
+        TriviaService.fetchQuestion { [weak self] fetchedQuestions in
+            guard let self = self else { return }
+            self.questions = fetchedQuestions
+            self.currQuestionIndex = 0
+            self.numCorrectQuestions = 0
+            
+            DispatchQueue.main.async {
+                self.updateQuestion(withQuestionIndex: self.currQuestionIndex)
+            }
+        }
+    }
   
   private func addGradient() {
     let gradientLayer = CAGradientLayer()
